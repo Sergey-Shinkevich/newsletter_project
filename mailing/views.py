@@ -1,3 +1,7 @@
+from django.views import View
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from mailing.services import send_mailing
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
@@ -178,3 +182,21 @@ class MailingAttemptDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         return MailingAttempt.objects.filter(mailing__owner=self.request.user)
+
+
+
+class RunMailingView(LoginRequiredMixin, View):
+    """
+    Представление для ручного запуска рассылки через POST-запрос из интерфейса.
+    """
+
+    def post(self, request, pk):
+        mailing = get_object_or_404(Mailing, pk=pk, owner=request.user)
+
+        try:
+            send_mailing(mailing)
+            messages.success(request, "Рассылка успешно запущена и обработана!")
+        except Exception as e:
+            messages.error(request, f"Ошибка при запуске рассылки: {e}")
+
+        return redirect("mailing:mailing_detail", pk=mailing.pk)
