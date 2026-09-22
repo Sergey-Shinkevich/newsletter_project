@@ -2,7 +2,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from mailing.forms import ClientForm, MessageForm, MailingForm
-from mailing.models import Client, Message, Mailing
+from mailing.models import Client, Message, Mailing, MailingAttempt
 
 
 class ClientListView(LoginRequiredMixin, ListView):
@@ -161,3 +161,20 @@ class MailingDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return Mailing.objects.filter(owner=self.request.user)
+
+
+class MailingAttemptListView(LoginRequiredMixin, ListView):
+    model = MailingAttempt
+    template_name = "mailing/mailing_attempt_list.html"
+
+    def get_queryset(self):
+        # Показываем попытки только для рассылок текущего пользователя
+        return MailingAttempt.objects.filter(mailing__owner=self.request.user)
+
+
+class MailingAttemptDetailView(LoginRequiredMixin, DetailView):
+    model = MailingAttempt
+    template_name = "mailing/mailing_attempt_detail.html"
+
+    def get_queryset(self):
+        return MailingAttempt.objects.filter(mailing__owner=self.request.user)
