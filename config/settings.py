@@ -139,8 +139,9 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 AUTH_USER_MODEL = "users.CustomUser"
-#LOGIN_REDIRECT_URL = "catalog:home"
-#LOGOUT_REDIRECT_URL = "catalog:home"
+LOGIN_REDIRECT_URL = 'mailing:mailing_list'
+LOGOUT_REDIRECT_URL = 'mailing:login'
+LOGIN_URL = 'mailing:login'
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"

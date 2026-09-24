@@ -17,8 +17,8 @@ from users.tokens import account_activation_token
 class RegisterView(CreateView):
     model = CustomUser
     form_class = CustomUserCreationForm
-    template_name = "users/register.html"
-    success_url = reverse_lazy("users:register_done")
+    template_name = 'mailing/mailing_form.html'
+    success_url = reverse_lazy('users:login')
 
     def form_valid(self, form):
         user = form.save(commit=False)

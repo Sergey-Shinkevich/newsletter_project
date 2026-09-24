@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.views import View
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
@@ -20,7 +21,7 @@ class ClientListView(LoginRequiredMixin, ListView):
 
 class ClientDetailView(LoginRequiredMixin, DetailView):
     model = Client
-    template_name = "mailing/client_detail.html"
+    template_name = "mailing/mailing_detail.html"
 
     def get_queryset(self):
         return Client.objects.filter(owner=self.request.user)
@@ -29,7 +30,7 @@ class ClientDetailView(LoginRequiredMixin, DetailView):
 class ClientCreateView(LoginRequiredMixin, CreateView):
     model = Client
     form_class = ClientForm
-    template_name = "mailing/client_form.html"
+    template_name = "mailing/mailing_form.html"
     success_url = reverse_lazy("mailing:client_list")
 
     def form_valid(self, form):
@@ -42,7 +43,7 @@ class ClientCreateView(LoginRequiredMixin, CreateView):
 class ClientUpdateView(LoginRequiredMixin, UpdateView):
     model = Client
     form_class = ClientForm
-    template_name = "mailing/client_form.html"
+    template_name = "mailing/mailing_form.html"
     success_url = reverse_lazy("mailing:client_list")
 
     def get_queryset(self):
@@ -51,7 +52,7 @@ class ClientUpdateView(LoginRequiredMixin, UpdateView):
 
 class ClientDeleteView(LoginRequiredMixin, DeleteView):
     model = Client
-    template_name = "mailing/client_confirm_delete.html"
+    template_name = "mailing/mailing_confirm_delete.html"
     success_url = reverse_lazy("mailing:client_list")
 
     def get_queryset(self):
@@ -68,7 +69,7 @@ class MessageListView(LoginRequiredMixin, ListView):
 
 class MessageDetailView(LoginRequiredMixin, DetailView):
     model = Message
-    template_name = "mailing/message_detail.html"
+    template_name = "mailing/mailing_detail.html"
 
     def get_queryset(self):
         return Message.objects.filter(owner=self.request.user)
@@ -77,7 +78,7 @@ class MessageDetailView(LoginRequiredMixin, DetailView):
 class MessageCreateView(LoginRequiredMixin, CreateView):
     model = Message
     form_class = MessageForm
-    template_name = "mailing/message_form.html"
+    template_name = "mailing/mailing_form.html"
     success_url = reverse_lazy("mailing:message_list")
 
     def form_valid(self, form):
@@ -90,7 +91,7 @@ class MessageCreateView(LoginRequiredMixin, CreateView):
 class MessageUpdateView(LoginRequiredMixin, UpdateView):
     model = Message
     form_class = MessageForm
-    template_name = "mailing/message_form.html"
+    template_name = "mailing/mailing_form.html"
     success_url = reverse_lazy("mailing:message_list")
 
     def get_queryset(self):
@@ -99,7 +100,7 @@ class MessageUpdateView(LoginRequiredMixin, UpdateView):
 
 class MessageDeleteView(LoginRequiredMixin, DeleteView):
     model = Message
-    template_name = "mailing/message_confirm_delete.html"
+    template_name = "mailing/mailing_confirm_delete.html"
     success_url = reverse_lazy("mailing:message_list")
 
     def get_queryset(self):
@@ -115,6 +116,34 @@ class MailingListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Mailing.objects.filter(owner=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        now = timezone.now()
+        user = self.request.user
+
+        # Метрики
+        context["total_mailings"] = Mailing.objects.filter(owner=user).count()
+        context["active_mailings"] = Mailing.objects.filter(
+            owner=user,
+            status=Mailing.STATUS_RUNNING,
+            start_datetime__lte=now,
+            end_datetime__gte=now
+        ).count()
+        context["total_clients"] = Client.objects.filter(owner=user).count()
+
+        # Статистика попыток по рассылкам текущего пользователя
+        user_mailings = Mailing.objects.filter(owner=user)
+        context["success_attempts"] = MailingAttempt.objects.filter(
+            mailing__in=user_mailings,
+            status=MailingAttempt.STATUS_SUCCESS
+        ).count()
+        context["failed_attempts"] = MailingAttempt.objects.filter(
+            mailing__in=user_mailings,
+            status=MailingAttempt.STATUS_FAILED
+        ).count()
+
+        return context
 
 
 class MailingDetailView(LoginRequiredMixin, DetailView):

@@ -1,0 +1,49 @@
+{% extends 'mailing/base.html' %}
+
+{% block title %}Список клиентов{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h1>Ваши клиенты</h1>
+        <a href="{% url 'mailing:client_create' %}" class="btn btn-primary">Добавить клиента</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% if object_list %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Имя</th>
+                            <th>Email</th>
+                            <th>Комментарий</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in object_list %}
+                            <tr>
+                                <td>{{ client.name }}</td>
+                                <td>{{ client.email }}</td>
+                                <td>{{ client.comment|truncatechars:50|default:"-" }}</td>
+                                <td>
+                                    <a href="{% url 'mailing:client_detail' client.pk %}" class="btn btn-sm btn-info">Просмотр</a>
+                                    <a href="{% url 'mailing:client_update' client.pk %}" class="btn btn-sm btn-warning">Изменить</a>
+                                    <a href="{% url 'mailing:client_delete' client.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                У вас пока нет сохраненных клиентов. Добавьте первого клиента!
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

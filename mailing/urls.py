@@ -1,4 +1,5 @@
-from django.urls import path
+from django.contrib.auth.views import LoginView, LogoutView
+from django.urls import path, include
 from mailing.apps import MailingConfig
 from mailing.views import (
     ClientCreateView,
@@ -20,6 +21,7 @@ from mailing.views import (
     MailingAttemptListView,
     RunMailingView,
 )
+from users.forms import UserLoginForm
 
 app_name = MailingConfig.name
 
@@ -50,7 +52,15 @@ urlpatterns = [
     path("attempts/<int:pk>/", MailingAttemptDetailView.as_view(), name="attempt_detail"),
 
     # Запуск рассылки
-    path("mailings/<int:pk>/run/", RunMailingView.as_view(), name="mailing_run"),
+    path("mailings/<int:pk>/run/", RunMailingView.as_view(), name="run_mailing"),
+
+    path('accounts/login/', LoginView.as_view(
+        template_name='mailing/mailing_form.html',
+        authentication_form=UserLoginForm,
+        extra_context={"button_text": "Войти"}  # <--- Вот эта строчка сделает кнопку "Войти"
+    ), name='login'),
+
+    path('accounts/logout/', LogoutView.as_view(), name='logout'),
 ]
 
 

@@ -1,0 +1,51 @@
+{% extends 'mailing/base.html' %}
+
+{% block title %}История попыток рассылок{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>История отправок (Попытки)</h1>
+        <p class="text-muted">Здесь отображается результат каждой попытки отправки писем по вашим рассылкам.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% if object_list %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Дата и время</th>
+                            <th>Рассылка (ID)</th>
+                            <th>Статус</th>
+                            <th>Ответ почтового сервера</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attempt in object_list %}
+                            <tr>
+                                <td>{{ attempt.attempt_datetime|date:"d.m.Y H:i:s" }}</td>
+                                <td>
+                                    <a href="{% url 'mailing:mailing_detail' attempt.mailing.pk %}">Рассылка №{{ attempt.mailing.pk }}</a>
+                                </td>
+                                <td>
+                                    <span class="badge {% if attempt.status == 'Успешно' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ attempt.status }}
+                                    </span>
+                                </td>
+                                <td><small class="text-muted">{{ attempt.server_response|default:"-" }}</small></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                История попыток пока пуста. Как только рассылки начнут выполняться, здесь появятся логи.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
