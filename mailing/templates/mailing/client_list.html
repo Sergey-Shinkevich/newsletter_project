@@ -28,11 +28,14 @@
                             <tr>
                                 <td>{{ client.name }}</td>
                                 <td>{{ client.email }}</td>
-                                <td>{{ client.comment|truncatechars:50|default:"-" }}</td>
+                                <td>{{ client.comment|default:"-" }}</td>
                                 <td>
                                     <a href="{% url 'mailing:client_detail' client.pk %}" class="btn btn-sm btn-info">Просмотр</a>
-                                    <a href="{% url 'mailing:client_update' client.pk %}" class="btn btn-sm btn-warning">Изменить</a>
-                                    <a href="{% url 'mailing:client_delete' client.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+
+                                    {% if user == client.owner or user.is_superuser %}
+                                        <a href="{% url 'mailing:client_update' client.pk %}" class="btn btn-sm btn-warning">Изменить</a>
+                                        <a href="{% url 'mailing:client_delete' client.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

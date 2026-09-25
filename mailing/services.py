@@ -1,22 +1,26 @@
-from datetime import datetime
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
+from django.utils import timezone
+
 from mailing.models import Mailing, MailingAttempt
 
 
 def send_mailing(mailing: Mailing):
     """
-    Функция отправки рассылки: проверяет временной интервал, отправляет письма клиентам и сохраняет попытку отправки.
+    Функция отправки рассылки: отправляет письма клиентам и сохраняет попытки пачкой (batch / bulk_create).
     """
-    current_time = datetime.now()
+    current_time = timezone.now()
 
-    # Проверяем, находится ли текущее время в пределах запланированного интервала или статус рассылки позволяет отправку
-    if mailing.start_datetime <= current_time <= mailing.end_datetime:
+    if mailing.status in [Mailing.STATUS_CREATED, Mailing.STATUS_RUNNING]:
         mailing.status = Mailing.STATUS_RUNNING
         mailing.save()
 
-        # Получаем всех клиентов, привязанных к этой рассылке
         clients = mailing.clients.all()
+
+        if not clients:
+            raise Exception("К этой рассылке не привязано ни одного клиента!")
+
+        attempts_to_create = []
 
         for client in clients:
             try:
@@ -29,20 +33,24 @@ def send_mailing(mailing: Mailing):
                     fail_silently=False,
                 )
 
-                # Фиксируем успешную попытку
-                MailingAttempt.objects.create(
-                    mailing=mailing,
-                    status=MailingAttempt.STATUS_SUCCESS,
-                    server_response=str(response)
+                # Добавляем успешную попытку в список для пакетного создания
+                attempts_to_create.append(
+                    MailingAttempt(
+                        mailing=mailing, status=MailingAttempt.STATUS_SUCCESS, server_response=str(response)
+                    )
                 )
             except Exception as e:
-                # Фиксируем неудачную попытку и сохраняем ошибку
-                MailingAttempt.objects.create(
-                    mailing=mailing,
-                    status=MailingAttempt.STATUS_FAILED,
-                    server_response=str(e)
+                # Добавляем неудачную попытку в список для пакетного создания
+                attempts_to_create.append(
+                    MailingAttempt(mailing=mailing, status=MailingAttempt.STATUS_FAILED, server_response=str(e))
                 )
 
-        # После завершения итерации по клиентам меняем статус рассылки на завершенную
+        # Сохраняем все попытки в базу данных одним запросом (batch / bulk_create)
+        if attempts_to_create:
+            MailingAttempt.objects.bulk_create(attempts_to_create)
+
+        # Меняем статус рассылки на завершенный
         mailing.status = Mailing.STATUS_COMPLETED
         mailing.save()
+    else:
+        raise Exception(f"Рассылка имеет статус '{mailing.get_status_display()}' и не может быть запущена.")

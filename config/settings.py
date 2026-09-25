@@ -92,8 +92,6 @@ DATABASES = {
 }
 
 
-
-
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
 
@@ -139,11 +137,12 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 AUTH_USER_MODEL = "users.CustomUser"
-LOGIN_REDIRECT_URL = 'mailing:mailing_list'
-LOGOUT_REDIRECT_URL = 'mailing:login'
-LOGIN_URL = 'mailing:login'
+LOGIN_REDIRECT_URL = "mailing:mailing_list"
+LOGOUT_REDIRECT_URL = "users:login"
+LOGIN_URL = "users:login"
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

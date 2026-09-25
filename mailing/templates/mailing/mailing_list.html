@@ -70,12 +70,12 @@
                             <th>Действия</th>
                         </tr>
                     </thead>
-                    <tbody>
+<tbody>
                         {% for mailing in object_list %}
                             <tr>
                                 <td>{{ mailing.id }}</td>
                                 <td>
-                                    <span class="badge 
+                                    <span class="badge
                                         {% if mailing.status == 'Создано' %}bg-secondary
                                         {% elif mailing.status == 'Запущено' %}bg-success
                                         {% else %}bg-primary{% endif %}">
@@ -87,8 +87,11 @@
                                 <td>{{ mailing.message.subject }}</td>
                                 <td>
                                     <a href="{% url 'mailing:mailing_detail' mailing.pk %}" class="btn btn-sm btn-info">Просмотр</a>
-                                    <a href="{% url 'mailing:mailing_update' mailing.pk %}" class="btn btn-sm btn-warning">Изменить</a>
-                                    <a href="{% url 'mailing:mailing_delete' mailing.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+
+                                    {% if user == mailing.owner or user.is_superuser %}
+                                        <a href="{% url 'mailing:mailing_update' mailing.pk %}" class="btn btn-sm btn-warning">Изменить</a>
+                                        <a href="{% url 'mailing:mailing_delete' mailing.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

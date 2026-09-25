@@ -29,8 +29,11 @@
                                 <td>{{ message.body|truncatechars:60 }}</td>
                                 <td>
                                     <a href="{% url 'mailing:message_detail' message.pk %}" class="btn btn-sm btn-info">Просмотр</a>
-                                    <a href="{% url 'mailing:message_update' message.pk %}" class="btn btn-sm btn-warning">Изменить</a>
-                                    <a href="{% url 'mailing:message_delete' message.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+
+                                    {% if user == message.owner or user.is_superuser %}
+                                        <a href="{% url 'mailing:message_update' message.pk %}" class="btn btn-sm btn-warning">Изменить</a>
+                                        <a href="{% url 'mailing:message_delete' message.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

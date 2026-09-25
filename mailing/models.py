@@ -11,10 +11,7 @@ class Client(models.Model):
 
     # Внешний ключ на владельца (модель CustomUser)
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        verbose_name="Владелец",
-        related_name="clients"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Владелец", related_name="clients"
     )
 
     class Meta:
@@ -33,10 +30,7 @@ class Message(models.Model):
 
     # Внешний ключ на владельца (модель CustomUser)
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        verbose_name="Владелец",
-        related_name="messages"
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Владелец", related_name="messages"
     )
 
     class Meta:
@@ -55,7 +49,11 @@ class Mailing(models.Model):
     STATUS_RUNNING = "Запущено"
     STATUS_COMPLETED = "Завершено"
 
-    STATUS_CHOICES = [(STATUS_CREATED, "Создано"), (STATUS_RUNNING, "Запущено"), (STATUS_COMPLETED, "Завершено"),]
+    STATUS_CHOICES = [
+        (STATUS_CREATED, "Создано"),
+        (STATUS_RUNNING, "Запущено"),
+        (STATUS_COMPLETED, "Завершено"),
+    ]
     created_at = models.DateTimeField(default=timezone.now, verbose_name="Дата создания рассылки")
     start_datetime = models.DateTimeField(verbose_name="Дата и время начала рассылки")
     end_datetime = models.DateTimeField(verbose_name="Дата и время окончания рассылки")
@@ -68,7 +66,9 @@ class Mailing(models.Model):
     clients = models.ManyToManyField(Client, verbose_name="Получатели", related_name="mailings")
 
     # Внешний ключ на владельца
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Владелец", related_name="mailings")
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Владелец", related_name="mailings"
+    )
 
     class Meta:
         verbose_name = "Рассылка"
@@ -82,7 +82,10 @@ class MailingAttempt(models.Model):
     STATUS_SUCCESS = "Успешно"
     STATUS_FAILED = "Не успешно"
 
-    STATUS_CHOICES = [(STATUS_SUCCESS, "Успешно"), (STATUS_FAILED, "Не успешно"),]
+    STATUS_CHOICES = [
+        (STATUS_SUCCESS, "Успешно"),
+        (STATUS_FAILED, "Не успешно"),
+    ]
 
     attempt_datetime = models.DateTimeField(default=timezone.now, verbose_name="Дата и время попытки")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, verbose_name="Статус попытки")

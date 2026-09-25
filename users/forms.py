@@ -1,4 +1,5 @@
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, UserChangeForm, UserCreationForm
+
 from mailing.forms import StyleFormMixin
 from users.models import CustomUser
 
@@ -14,6 +15,8 @@ class CustomUserChangeForm(StyleFormMixin, UserChangeForm):
         model = CustomUser
         fields = ("email", "first_name", "last_name", "patronymic", "phone_number", "country")
 
+
 class UserLoginForm(StyleFormMixin, AuthenticationForm):
     """Форма входа в систему с красивыми стилями Bootstrap"""
+
     pass

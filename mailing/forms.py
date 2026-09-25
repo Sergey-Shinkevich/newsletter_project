@@ -1,9 +1,11 @@
 from django import forms
+
 from mailing.models import Client, Mailing, Message
 
 
 class StyleFormMixin:
     """Миксин для автоматического добавления Bootstrap-стилей к полям формы"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
