@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -11,7 +12,7 @@ from mailing.models import Client, Mailing, MailingAttempt, Message
 from mailing.services import send_mailing
 from users.services import is_manager
 
-# --- CLIENT VIEWS ---
+# CLIENT VIEWS
 
 
 class ClientListView(LoginRequiredMixin, ListView):
@@ -75,7 +76,7 @@ class ClientDeleteView(LoginRequiredMixin, DeleteView):
         return Client.objects.filter(owner=user)
 
 
-# --- MESSAGE VIEWS ---
+# MESSAGE VIEWS
 
 
 class MessageListView(LoginRequiredMixin, ListView):
@@ -138,7 +139,7 @@ class MessageDeleteView(LoginRequiredMixin, DeleteView):
         return Message.objects.filter(owner=user)
 
 
-# --- MAILING VIEWS ---
+# MAILING VIEWS
 
 
 class MailingListView(LoginRequiredMixin, ListView):
@@ -156,31 +157,50 @@ class MailingListView(LoginRequiredMixin, ListView):
         now = timezone.now()
         user = self.request.user
 
+        # 1. Формируем уникальный ключ кэша в зависимости от роли и ID пользователя
         if is_manager(user) or user.is_superuser:
-            # Для менеджера показываем общую статистику по всей системе
-            context["total_mailings"] = Mailing.objects.count()
-            context["active_mailings"] = Mailing.objects.filter(
-                status=Mailing.STATUS_RUNNING, start_datetime__lte=now, end_datetime__gte=now
-            ).count()
-            context["total_clients"] = Client.objects.count()
-            context["success_attempts"] = MailingAttempt.objects.filter(status=MailingAttempt.STATUS_SUCCESS).count()
-            context["failed_attempts"] = MailingAttempt.objects.filter(status=MailingAttempt.STATUS_FAILED).count()
+            cache_key = "dashboard_stats_manager"
         else:
-            # Метрики для обычного владельца
-            context["total_mailings"] = Mailing.objects.filter(owner=user).count()
-            context["active_mailings"] = Mailing.objects.filter(
-                owner=user, status=Mailing.STATUS_RUNNING, start_datetime__lte=now, end_datetime__gte=now
-            ).count()
-            context["total_clients"] = Client.objects.filter(owner=user).count()
+            cache_key = f"dashboard_stats_user_{user.pk}"
 
-            user_mailings = Mailing.objects.filter(owner=user)
-            context["success_attempts"] = MailingAttempt.objects.filter(
-                mailing__in=user_mailings, status=MailingAttempt.STATUS_SUCCESS
-            ).count()
-            context["failed_attempts"] = MailingAttempt.objects.filter(
-                mailing__in=user_mailings, status=MailingAttempt.STATUS_FAILED
-            ).count()
+        # 2. Пытаемся достать готовый словарь метрик из Redis
+        stats = cache.get(cache_key)
 
+        # 3. Если в кэше ничего нет — считаем через запросы к БД
+        if stats is None:
+            if is_manager(user) or user.is_superuser:
+                # Для менеджера показываем общую статистику по всей системе
+                stats = {
+                    "total_mailings": Mailing.objects.count(),
+                    "active_mailings": Mailing.objects.filter(
+                        status=Mailing.STATUS_RUNNING, start_datetime__lte=now, end_datetime__gte=now
+                    ).count(),
+                    "total_clients": Client.objects.count(),
+                    "success_attempts": MailingAttempt.objects.filter(status=MailingAttempt.STATUS_SUCCESS).count(),
+                    "failed_attempts": MailingAttempt.objects.filter(status=MailingAttempt.STATUS_FAILED).count(),
+                }
+            else:
+                # Метрики для обычного владельца
+                user_mailings = Mailing.objects.filter(owner=user)
+                stats = {
+                    "total_mailings": user_mailings.count(),
+                    "active_mailings": user_mailings.filter(
+                        owner=user, status=Mailing.STATUS_RUNNING, start_datetime__lte=now, end_datetime__gte=now
+                    ).count(),
+                    "total_clients": Client.objects.filter(owner=user).count(),
+                    "success_attempts": MailingAttempt.objects.filter(
+                        mailing__in=user_mailings, status=MailingAttempt.STATUS_SUCCESS
+                    ).count(),
+                    "failed_attempts": MailingAttempt.objects.filter(
+                        mailing__in=user_mailings, status=MailingAttempt.STATUS_FAILED
+                    ).count(),
+                }
+
+            # Сохраняем вычисленный словарь в Redis на 5 минут (300 секунд)
+            cache.set(cache_key, stats, 300)
+
+        # 4. Переносим все метрики из словаря кэша в контекст шаблона
+        context.update(stats)
         return context
 
 
