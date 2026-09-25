@@ -1,0 +1,108 @@
+{% extends 'mailing/base.html' %}
+
+{% block title %}Список рассылок{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h1>Панель управления рассылками</h1>
+        <a href="{% url 'mailing:mailing_create' %}" class="btn btn-primary">Создать рассылку</a>
+    </div>
+</div>
+
+<!-- Блок статистики по ТЗ -->
+<div class="row text-center mb-5">
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-primary">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Всего рассылок</h5>
+                <h2 class="display-6 fw-bold text-primary">{{ total_mailings }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-success">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Активных рассылок</h5>
+                <h2 class="display-6 fw-bold text-success">{{ active_mailings }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-info">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Ваших клиентов</h5>
+                <h2 class="display-6 fw-bold text-info">{{ total_clients }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика попыток -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Статистика отправок сообщений</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-1">Успешных попыток отправки: <span class="badge bg-success fs-6">{{ success_attempts }}</span></p>
+                <p class="mb-0">Неуспешных попыток отправки: <span class="badge bg-danger fs-6">{{ failed_attempts }}</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список рассылок пользователя -->
+<div class="row">
+    <div class="col-12">
+        <h3>Ваши рассылки</h3>
+        {% if object_list %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Статус</th>
+                            <th>Начало</th>
+                            <th>Окончание</th>
+                            <th>Сообщение</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+<tbody>
+                        {% for mailing in object_list %}
+                            <tr>
+                                <td>{{ mailing.id }}</td>
+                                <td>
+                                    <span class="badge
+                                        {% if mailing.status == 'Создано' %}bg-secondary
+                                        {% elif mailing.status == 'Запущено' %}bg-success
+                                        {% else %}bg-primary{% endif %}">
+                                        {{ mailing.status }}
+                                    </span>
+                                </td>
+                                <td>{{ mailing.start_datetime|date:"d.m.Y H:i" }}</td>
+                                <td>{{ mailing.end_datetime|date:"d.m.Y H:i" }}</td>
+                                <td>{{ mailing.message.subject }}</td>
+                                <td>
+                                    <a href="{% url 'mailing:mailing_detail' mailing.pk %}" class="btn btn-sm btn-info">Просмотр</a>
+
+                                    {% if user == mailing.owner or user.is_superuser %}
+                                        <a href="{% url 'mailing:mailing_update' mailing.pk %}" class="btn btn-sm btn-warning">Изменить</a>
+                                        <a href="{% url 'mailing:mailing_delete' mailing.pk %}" class="btn btn-sm btn-danger">Удалить</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                У вас пока нет созданных рассылок. Нажмите кнопку «Создать рассылку», чтобы начать.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
