@@ -1,0 +1,50 @@
+{% extends 'mailing/base.html' %}
+
+{% block title %}Детали объекта{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Информация</h4>
+                <a href="javascript:history.back()" class="btn btn-sm btn-light">Назад</a>
+            </div>
+            <div class="card-body">
+                <!-- Универсальный вывод полей в зависимости от того, какой объект передан -->
+
+                {% if object.subject %}
+                    <!-- Если это Сообщение -->
+                    <h3 class="card-title text-primary">{{ object.subject }}</h3>
+                    <hr>
+                    <p class="card-text"><strong>Текст сообщения:</strong></p>
+                    <div class="p-3 bg-light border rounded">{{ object.body|linebreaks }}</div>
+
+                {% elif object.email %}
+                    <!-- Если это Клиент -->
+                    <h3 class="card-title text-primary">{{ object.first_name }} {{ object.last_name }} {{ object.patronymic|default:"" }}</h3>
+                    <hr>
+                    <p><strong>Email:</strong> {{ object.email }}</p>
+                    <p><strong>Комментарий:</strong> {{ object.comment|default:"Нет комментариев" }}</p>
+
+                {% elif object.start_datetime %}
+                    <!-- Если это Рассылка -->
+                    <h3 class="card-title text-primary">Рассылка №{{ object.pk }}</h3>
+                    <hr>
+                    <p><strong>Статус:</strong> <span class="badge bg-secondary">{{ object.status }}</span></p>
+                    <p><strong>Начало:</strong> {{ object.start_datetime|date:"d.m.Y H:i" }}</p>
+                    <p><strong>Окончание:</strong> {{ object.end_datetime|date:"d.m.Y H:i" }}</p>
+                    <p><strong>Сообщение:</strong> {{ object.message.subject }}</p>
+
+                    <div class="mt-4">
+                        <form action="{% url 'mailing:run_mailing' object.pk %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">Запустить рассылку вручную</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
